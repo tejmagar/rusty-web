@@ -8,7 +8,8 @@ use crate::headers::{Headers};
 use crate::parser::{multipart, url_encoded};
 use crate::parser::multipart::{FormPart, MultipartFormDataError};
 use crate::parser::multipart::reader::FormDataReader;
-use crate::parser::url_encoded::{FormFields, UrlEncodedFormDataError, UrlEncodedReader};
+use crate::parser::url_encoded::{FormFields, UrlEncodedFormDataError};
+use crate::parser::url_encoded::reader::UrlEncodedReader;
 use crate::request::form::{FormFiles, FormData, FormFile};
 use crate::server::Context;
 

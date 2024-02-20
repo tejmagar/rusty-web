@@ -10,7 +10,7 @@ pub fn parse_url_encoded(text: &str) -> HashMap<String, Vec<String>> {
             let name = key_values.get(0).unwrap();
             let value = key_values.get(1).unwrap();
 
-            let name_formatted= url_decode(name);
+            let name_formatted = url_decode(name);
             let value_formatted = url_decode(value);
 
             if !params.contains_key(&name_formatted) {
@@ -32,18 +32,15 @@ pub fn url_decode(value: &str) -> String {
         Err(_) => {
             value.to_string()
         }
-    }
+    };
 }
-
 
 pub mod url_encoded {
     use std::collections::HashMap;
-    use std::io::Read;
-    use std::net::TcpStream;
     use crate::headers;
     use crate::headers::{Headers};
     use crate::parser::parse_url_encoded;
-    use crate::parser::url_encoded::UrlEncodedFormDataError::Others;
+    use crate::parser::url_encoded::reader::StreamReader;
 
     #[derive(Debug)]
     pub enum UrlEncodedFormDataError {
@@ -61,88 +58,93 @@ pub mod url_encoded {
         Others(&'static str),
     }
 
+    pub mod reader {
+        use std::io::Read;
+        use std::net::TcpStream;
+        use crate::parser::url_encoded::UrlEncodedFormDataError;
 
-    /// The reusable trait for fetching "x-www-form-urlencoded" form data
-    pub trait StreamReader {
-        fn get_chunk(&mut self) -> Result<Vec<u8>, UrlEncodedFormDataError>;
-        fn get_exact(&mut self, size: usize) -> Result<Vec<u8>, UrlEncodedFormDataError>;
-    }
-
-    pub struct UrlEncodedReader {
-        pub stream: TcpStream,
-        pub content_length: usize,
-        // Size of bytes that has been already read
-        pub bytes_read: usize,
-        pub body_ended: bool,
-    }
-
-    impl UrlEncodedReader {
-        pub fn new(stream: TcpStream, content_length: usize, bytes_read: usize) -> Self {
-            let body_ended;
-
-            if bytes_read == content_length {
-                body_ended = true;
-            } else {
-                body_ended = false;
-            };
-
-            return Self {
-                stream,
-                content_length,
-                bytes_read,
-                body_ended,
-            };
+        /// The reusable trait for fetching "x-www-form-urlencoded" form data
+        pub trait StreamReader {
+            fn get_chunk(&mut self) -> Result<Vec<u8>, UrlEncodedFormDataError>;
+            fn get_exact(&mut self, size: usize) -> Result<Vec<u8>, UrlEncodedFormDataError>;
         }
 
-        fn update_read_status(&mut self, new_chunk: &[u8]) {
-            self.bytes_read += new_chunk.len();
-
-            if self.bytes_read >= self.content_length {
-                self.body_ended = true;
-            }
-        }
-    }
-
-    impl StreamReader for UrlEncodedReader {
-        fn get_chunk(&mut self) -> Result<Vec<u8>, UrlEncodedFormDataError> {
-            if self.body_ended {
-                return Err(UrlEncodedFormDataError::BodyReadEnd);
-            }
-
-            let mut buffer = [0u8; 1024];
-            let read_result = self.stream.read(&mut buffer);
-
-            if !read_result.is_ok() {
-                return Err(Others(
-                    "Unable to read stream. May be client disconnected."
-                ));
-            }
-
-            let read_size = read_result.unwrap();
-
-            if read_size == 0 {
-                return Err(Others("Bytes read size is 0. Probably client disconnected."));
-            }
-
-            let chunk = &buffer[0..read_size];
-            self.update_read_status(chunk);
-            return Ok(chunk.to_vec());
+        pub struct UrlEncodedReader {
+            pub stream: TcpStream,
+            pub content_length: usize,
+            // Size of bytes that has been already read
+            pub bytes_read: usize,
+            pub body_ended: bool,
         }
 
-        fn get_exact(&mut self, size: usize) -> Result<Vec<u8>, UrlEncodedFormDataError> {
-            if self.body_ended {
-                return Err(UrlEncodedFormDataError::BodyReadEnd);
+        impl UrlEncodedReader {
+            pub fn new(stream: TcpStream, content_length: usize, bytes_read: usize) -> Self {
+                let body_ended;
+
+                if bytes_read == content_length {
+                    body_ended = true;
+                } else {
+                    body_ended = false;
+                };
+
+                return Self {
+                    stream,
+                    content_length,
+                    bytes_read,
+                    body_ended,
+                };
             }
 
-            let mut buffer = vec![0u8; size];
-            let result = self.stream.read_exact(&mut buffer);
-            if !result.is_ok() {
-                return Err(Others(
-                    "Unable to read stream. May be client disconnected."
-                ));
+            fn update_read_status(&mut self, new_chunk: &[u8]) {
+                self.bytes_read += new_chunk.len();
+
+                if self.bytes_read >= self.content_length {
+                    self.body_ended = true;
+                }
+            }
+        }
+
+        impl StreamReader for UrlEncodedReader {
+            fn get_chunk(&mut self) -> Result<Vec<u8>, UrlEncodedFormDataError> {
+                if self.body_ended {
+                    return Err(UrlEncodedFormDataError::BodyReadEnd);
+                }
+
+                let mut buffer = [0u8; 1024];
+                let read_result = self.stream.read(&mut buffer);
+
+                if !read_result.is_ok() {
+                    return Err(UrlEncodedFormDataError::Others(
+                        "Unable to read stream. May be client disconnected."
+                    ));
+                }
+
+                let read_size = read_result.unwrap();
+
+                if read_size == 0 {
+                    return Err(UrlEncodedFormDataError::Others("Bytes read size is 0. Probably client disconnected."));
+                }
+
+                let chunk = &buffer[0..read_size];
+                self.update_read_status(chunk);
+                return Ok(chunk.to_vec());
             }
 
-            return Ok(buffer.to_vec());
+            fn get_exact(&mut self, size: usize) -> Result<Vec<u8>, UrlEncodedFormDataError> {
+                if self.body_ended {
+                    return Err(UrlEncodedFormDataError::BodyReadEnd);
+                }
+
+                let mut buffer = vec![0u8; size];
+                let result = self.stream.read_exact(&mut buffer);
+                if !result.is_ok() {
+                    return Err(UrlEncodedFormDataError::Others(
+                        "Unable to read stream. May be client disconnected."
+                    ));
+                }
+
+                return Ok(buffer.to_vec());
+            }
         }
     }
 
