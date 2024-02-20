@@ -25,7 +25,7 @@ fn home(request: Request, mut response: Response) {
 
 fn about(request: Request, mut response: Response) {
     response.html(Status::Ok, "About Us".to_string()).send();
-
+}
 
 fn main() {
     let paths: Paths = vec![
