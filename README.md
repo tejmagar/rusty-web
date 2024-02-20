@@ -7,7 +7,7 @@ It does not implement all the http RFC standards. However, you can implement you
 
 ```
 [dependencies]
-rusty-web = { git = "https://github.com/tejmagar/rusty-web" }
+rusty-web = "0.0.1"
 ```
 
 ## Sample
