@@ -10,26 +10,8 @@ pub fn parse_url_encoded(text: &str) -> HashMap<String, Vec<String>> {
             let name = key_values.get(0).unwrap();
             let value = key_values.get(1).unwrap();
 
-            let name_formatted;
-            let value_formatted;
-
-            match urlencoding::decode(name) {
-                Ok(name) => {
-                    name_formatted = name.to_string();
-                }
-                Err(_) => {
-                    name_formatted = name.to_string();
-                }
-            }
-
-            match urlencoding::decode(value) {
-                Ok(value) => {
-                    value_formatted = value.to_string();
-                }
-                Err(_) => {
-                    value_formatted = name_formatted.to_string();
-                }
-            }
+            let name_formatted= url_decode(name);
+            let value_formatted = url_decode(value);
 
             if !params.contains_key(&name_formatted) {
                 params.insert(name.to_string(), Vec::new());
@@ -40,6 +22,17 @@ pub fn parse_url_encoded(text: &str) -> HashMap<String, Vec<String>> {
         }
     }
     return params;
+}
+
+pub fn url_decode(value: &str) -> String {
+    return match urlencoding::decode(value) {
+        Ok(decoded_value) => {
+            decoded_value.to_string()
+        }
+        Err(_) => {
+            value.to_string()
+        }
+    }
 }
 
 

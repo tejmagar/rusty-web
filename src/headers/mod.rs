@@ -62,13 +62,15 @@ pub fn extract_headers(stream: &mut TcpStream, start_header: &mut String,
 
     let raw_request_headers = String::from_utf8(header_bytes)
         .expect("Unsupported header encoding.");
-    let mut header_lines = raw_request_headers.split("\r\n");
-
-    *start_header = String::from(header_lines.next().unwrap());
+    let mut header_lines: Vec<&str> = raw_request_headers.split("\r\n").collect();
 
     let mut headers: Headers = HashMap::new();
-    for header in header_lines {
-        let key_value = parse_header(header);
+    for (index, header_line) in header_lines.iter().enumerate() {
+        if index == 0 {
+            *start_header = header_line.to_string();
+        }
+
+        let key_value = parse_header(header_line);
 
         if let Some((key, value)) = key_value {
             if headers.contains_key(&key) {
