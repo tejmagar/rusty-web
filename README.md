@@ -2,6 +2,7 @@
 
 It is a lightweight web framework for rust developers.
 It does not implement all the http RFC standards. However, you can implement your own by customizing it.
+See [documentation...](https://tejmagar.github.io/rusty-web/)
 
 ## Installation
 
