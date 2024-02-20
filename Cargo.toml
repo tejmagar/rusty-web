@@ -4,7 +4,7 @@ version = "0.0.1"
 edition = "2021"
 authors = ["Tej Magar"]
 description = "Rusty Web is a lightweight web framework for rust developers."
-license = "GPL-3"
+license = "MIT"
 documentation = "https://tejmagar.github.io/rusty-web/"
 repository = "https://github.com/tejmagar/rusty-web/"
 
