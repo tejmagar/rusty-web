@@ -1,0 +1,6 @@
+site_name: Rusty Web
+repo_url: https://github.com/tejmagar/rusty-web
+
+nav:
+  - Getting Started: README.md
+
