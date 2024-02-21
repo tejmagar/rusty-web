@@ -1,5 +1,97 @@
 use std::collections::HashMap;
 
+pub mod body {
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+    use crate::headers;
+    use crate::headers::Headers;
+    use crate::parser::body::reader::StreamReader;
+
+    pub struct Limits {
+        pub max_body_size: usize,
+    }
+
+    pub enum BodyReadError {
+        MaxBodySizeExceed,
+        ContentLengthMissing,
+        Others(&'static str),
+    }
+
+    pub mod reader {
+        use std::net::TcpStream;
+        use crate::parser::body::{BodyReadError, Limits};
+
+        pub trait StreamReader {
+            fn get_chunk(&mut self) -> Result<Vec<u8>, BodyReadError>;
+            fn get_exact(&mut self, size: usize) -> Result<Vec<u8>, BodyReadError>;
+        }
+
+        pub struct BodyReader {
+            stream: TcpStream,
+            content_length: usize,
+            limits: Limits,
+        }
+
+        impl StreamReader for BodyReader {
+            fn get_chunk(&mut self) -> Result<Vec<u8>, BodyReadError> {
+                todo!()
+            }
+
+            fn get_exact(&mut self, size: usize) -> Result<Vec<u8>, BodyReadError> {
+                todo!()
+            }
+        }
+    }
+
+    pub fn parse<T: StreamReader>(partial_bytes: Vec<u8>, headers: &Headers, mut reader: T, limits: Limits)
+                                  -> Result<NamedTempFile, BodyReadError> {
+        let body_buffer = Vec::from(partial_bytes);
+        let mut body_read = body_buffer.len();
+
+        let content_length = headers::content_length(&headers);
+        if !content_length.is_some() {
+            return Err(BodyReadError::ContentLengthMissing);
+        }
+
+        // Create new tmp directory
+        let temp_file_create = NamedTempFile::new();
+        let mut temp_file;
+
+        match temp_file_create {
+            Ok(file) => {
+                temp_file = file;
+            }
+
+            Err(_) => {
+                return Err(BodyReadError::Others("Error creating temporary file"));
+            }
+        }
+
+        let content_length = content_length.unwrap();
+        while content_length >= body_read {
+            let read_result = reader.get_chunk();
+            match read_result {
+                Ok(chunk) => {
+                    body_read += chunk.len();
+                    let write_result = temp_file.write_all(&chunk);
+                    if !write_result.is_ok() {
+                        return Err(BodyReadError::Others("Error writing to temporary file"));
+                    }
+
+                    if content_length >= body_read {
+                        break;
+                    }
+                }
+                Err(error) => {
+                    return Err(error);
+                }
+            }
+        }
+
+        return Ok(temp_file);
+    }
+}
+
 pub fn parse_url_encoded(text: &str) -> HashMap<String, Vec<String>> {
     let mut params = HashMap::new();
     let values = text.split("&");
