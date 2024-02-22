@@ -6,5 +6,8 @@ however you like.
 ## Extracting request body
 
 To access raw request body, you can use `request.body()` method. For this `Content-Length` header must be specified in
-the request. 
+the request.
 
+## Access TCP Stream
+
+You can access the TCP Stream from `request.stream` or `response.stream`.
