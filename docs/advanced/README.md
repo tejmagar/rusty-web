@@ -13,7 +13,7 @@ You can access the common variables from request struct.
 * request.context - This will contain the information about how to handle the further request.
 * request.pathname - Current pathname of the request.
 * request.raw_path - Full path of the request including query params.
-* request.partial_body - This is a incomplete body bytes. Use this, if you are trying to implement custom response.
+* request.partial_body - This is incomplete body bytes. Use this, if you are trying to implement custom response.
 
 ## Response
 
