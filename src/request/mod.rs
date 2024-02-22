@@ -222,19 +222,19 @@ impl Request {
         return None;
     }
 
-    pub fn form_data(&mut self) -> &FormData {
+    pub fn form_data(&mut self) -> &mut FormData {
         if !self.body_read.load(Ordering::Relaxed) {
             self.parse_request_body();
         }
-        return &self.form_data;
+        return &mut self.form_data;
     }
 
-    pub fn files(&mut self) -> &FormFiles {
+    pub fn files(&mut self) -> &mut FormFiles {
         if !self.body_read.load(Ordering::Relaxed) {
             self.parse_request_body();
         }
 
-        return &self.form_files;
+        return &mut self.form_files;
     }
 
     pub fn parse_request_body(&mut self) {
