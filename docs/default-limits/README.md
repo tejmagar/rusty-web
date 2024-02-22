@@ -8,5 +8,8 @@ allowed size.
     - Overall maximum body: 512 MiB
     - Form Part header: 1 MiB
     - Form part file size: None
-    - Form part file body: None
-- Body: 512 MiB
+    - Form part value: 1 MiB
+- application/x-www-form-urlencoded
+    - Overall maximum body: 2 MiB
+- Raw Body: 512 MiB
+

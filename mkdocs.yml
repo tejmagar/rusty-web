@@ -5,4 +5,6 @@ edit_uri: ./edit/main/docs
 
 nav:
   - Getting Started: README.md
+  - Advanced Usage: advanced/README.md
+  - Default Limits: default-limits/README.md
 
