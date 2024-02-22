@@ -36,21 +36,23 @@ pub mod form {
         pub temp_file: NamedTempFile,
     }
 
-    pub type FormData = HashMap<String, Vec<String>>;
-    pub type FormFiles = HashMap<String, Vec<FormFile>>;
+    pub type MapFirstString = HashMap<String, Vec<String>>;
 
-    pub trait FormDataMethods {
+    pub trait MapFirstStringMethod {
         fn value(&self, name: &str) -> Option<String>;
     }
 
-    pub trait FormFileMethods {
-        fn value(&self, name: &str) -> Option<&FormFile>;
-    }
-
-    impl FormDataMethods for FormData {
+    impl MapFirstStringMethod for MapFirstString {
         fn value(&self, name: &str) -> Option<String> {
             return map_first_vec_value(self, name);
         }
+    }
+
+    pub type FormData = HashMap<String, Vec<String>>;
+    pub type FormFiles = HashMap<String, Vec<FormFile>>;
+
+    pub trait FormFileMethods {
+        fn value(&self, name: &str) -> Option<&FormFile>;
     }
 
     impl FormFileMethods for FormFiles {
@@ -73,17 +75,6 @@ pub mod form {
 }
 
 pub type QueryParams = HashMap<String, Vec<String>>;
-
-pub trait QueryMethods {
-    fn value(&self, name: &str) -> Option<String>;
-}
-
-impl QueryMethods for QueryParams {
-    fn value(&self, name: &str) -> Option<String> {
-        return map_first_vec_value(self, name);
-    }
-}
-
 
 pub struct Request {
     pub context: Arc<Context>,
