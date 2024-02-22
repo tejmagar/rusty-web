@@ -1,7 +1,6 @@
 # Rusty Web
 
-It is a lightweight web framework for rust developers.
-It does not implement all the http RFC standards. However, you can implement your own by customizing it.
+Rusty web is a simple to use, fully customizable lightweight web framework for rust developers.
 [Learn rusty web](https://tejmagar.github.io/rusty-web/)
 
 ## Installation
@@ -37,9 +36,6 @@ fn main() {
     run_server("0.0.0.0:8080", paths);
 }
 ```
-
-
-Above listed goals are not implemented, however you can write your own mechanism to handle above cases.
 
 ## Conclusion
 
