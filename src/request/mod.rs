@@ -5,7 +5,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tempfile::NamedTempFile;
 use crate::headers;
 use crate::headers::{Headers};
-use crate::parser::{multipart, url_encoded};
+use crate::parser::{body, multipart, url_encoded};
+use crate::parser::body::Limits;
+use crate::parser::body::reader::BodyReader;
 use crate::parser::multipart::{FormPart, MultipartFormDataError};
 use crate::parser::multipart::reader::FormDataReader;
 use crate::parser::url_encoded::{FormFields, UrlEncodedFormDataError};
@@ -167,11 +169,56 @@ impl Request {
     }
 
     pub fn body(&mut self) -> Option<NamedTempFile> {
-        if !self.body_read.load(Ordering::Relaxed) {
-            self.parse_request_body();
+        if self.body_read.load(Ordering::Relaxed) {
+            eprintln!("Body already read");
+            return None;
         }
 
-        println!("Not supported");
+        let content_length = headers::content_length(&self.headers);
+
+        if !content_length.is_some() {
+            eprintln!("Content-Length header is missing");
+            return None;
+        }
+
+        let cloned_stream = self.stream.try_clone();
+        if !cloned_stream.is_ok() {
+            eprintln!("Failed to clone stream");
+            return None;
+        }
+
+        let limits = Limits {
+            max_body_size: 512 * 1024 * 1024, // 512 MiB
+        };
+
+        let mut partial_bytes: Vec<u8> = Vec::new();
+        if let Some(partial) = self.partial_body.as_mut() {
+            partial_bytes.extend(partial.clone());
+            partial.clear();
+        }
+
+        let reader = BodyReader::new(cloned_stream.unwrap(), content_length.unwrap(),
+                                     partial_bytes.len(), limits);
+
+        let parse_result = body::parse(
+            partial_bytes,
+            &self.headers,
+            reader,
+        );
+
+        self.body_read.store(true, Ordering::Relaxed);
+
+        match parse_result {
+            Ok(temp_file) => {
+                self.body_parsed.store(true, Ordering::Relaxed);
+                return Some(temp_file);
+            }
+
+            Err(error) => {
+                eprintln!("Error: {:?}", error);
+            }
+        }
+
         return None;
     }
 

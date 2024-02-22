@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 pub mod body {
-    use std::io::Write;
+    use std::io::{Seek, SeekFrom, Write};
     use tempfile::NamedTempFile;
     use crate::headers;
     use crate::headers::Headers;
@@ -11,13 +11,16 @@ pub mod body {
         pub max_body_size: usize,
     }
 
+    #[derive(Debug)]
     pub enum BodyReadError {
         MaxBodySizeExceed,
         ContentLengthMissing,
+        BodyAlreadyRead,
         Others(&'static str),
     }
 
     pub mod reader {
+        use std::io::Read;
         use std::net::TcpStream;
         use crate::parser::body::{BodyReadError, Limits};
 
@@ -29,23 +32,72 @@ pub mod body {
         pub struct BodyReader {
             stream: TcpStream,
             content_length: usize,
+            bytes_read: usize,
             limits: Limits,
+        }
+
+        impl BodyReader {
+            pub fn new(stream: TcpStream, content_length: usize, bytes_read: usize, limits: Limits) -> Self {
+                println!("{:?}", bytes_read);
+
+                return Self {
+                    stream,
+                    content_length,
+                    bytes_read,
+                    limits,
+                };
+            }
         }
 
         impl StreamReader for BodyReader {
             fn get_chunk(&mut self) -> Result<Vec<u8>, BodyReadError> {
-                todo!()
+                if self.bytes_read >= self.content_length {
+                    return Err(BodyReadError::MaxBodySizeExceed);
+                }
+
+                if self.bytes_read >= self.limits.max_body_size {
+                    return Err(BodyReadError::BodyAlreadyRead);
+                }
+
+                let mut buffer = [0u8; 1024];
+                let read_result = self.stream.read(&mut buffer);
+                if !read_result.is_ok() {
+                    return Err(BodyReadError::Others(
+                        "Unable to read stream. May be client disconnected."
+                    ));
+                }
+
+                let chunk_length = read_result.unwrap();
+                let chunk = Vec::from(&buffer[0..chunk_length]);
+                self.bytes_read += chunk_length;
+                return Ok(chunk);
             }
 
             fn get_exact(&mut self, size: usize) -> Result<Vec<u8>, BodyReadError> {
-                todo!()
+                if self.bytes_read >= self.content_length {
+                    return Err(BodyReadError::MaxBodySizeExceed);
+                }
+
+                if self.bytes_read >= self.limits.max_body_size {
+                    return Err(BodyReadError::BodyAlreadyRead);
+                }
+
+                let mut buffer = vec![0u8; size];
+                let read_result = self.stream.read_exact(&mut buffer);
+                if !read_result.is_ok() {
+                    return Err(BodyReadError::Others(
+                        "Unable to read stream. May be client disconnected."
+                    ));
+                }
+                self.bytes_read += size;
+                return Ok(buffer);
             }
         }
     }
 
-    pub fn parse<T: StreamReader>(partial_bytes: Vec<u8>, headers: &Headers, mut reader: T, limits: Limits)
+    pub fn parse<T: StreamReader>(partial_bytes: Vec<u8>, headers: &Headers, mut reader: T)
                                   -> Result<NamedTempFile, BodyReadError> {
-        let body_buffer = Vec::from(partial_bytes);
+        let mut body_buffer = Vec::from(partial_bytes);
         let mut body_read = body_buffer.len();
 
         let content_length = headers::content_length(&headers);
@@ -68,27 +120,34 @@ pub mod body {
         }
 
         let content_length = content_length.unwrap();
-        while content_length >= body_read {
+
+        loop {
+            let write_result = temp_file.write_all(&body_buffer);
+            if !write_result.is_ok() {
+                return Err(BodyReadError::Others("Error writing to temporary file"));
+            }
+
+            if body_read >= content_length {
+                let seek_result = temp_file.seek(SeekFrom::Start(0));
+                if !seek_result.is_ok() {
+                    return Err(BodyReadError::Others("Failed to seek temporary file"));
+                }
+                return Ok(temp_file);
+            }
+
+            body_buffer.clear();
+
             let read_result = reader.get_chunk();
             match read_result {
                 Ok(chunk) => {
                     body_read += chunk.len();
-                    let write_result = temp_file.write_all(&chunk);
-                    if !write_result.is_ok() {
-                        return Err(BodyReadError::Others("Error writing to temporary file"));
-                    }
-
-                    if content_length >= body_read {
-                        break;
-                    }
+                    body_buffer.extend(chunk);
                 }
                 Err(error) => {
                     return Err(error);
                 }
             }
         }
-
-        return Ok(temp_file);
     }
 }
 
