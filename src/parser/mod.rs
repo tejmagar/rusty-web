@@ -38,8 +38,6 @@ pub mod body {
 
         impl BodyReader {
             pub fn new(stream: TcpStream, content_length: usize, bytes_read: usize, limits: Limits) -> Self {
-                println!("{:?}", bytes_read);
-
                 return Self {
                     stream,
                     content_length,
@@ -531,6 +529,7 @@ pub mod multipart {
     pub struct Limits {
         pub max_body_size: Option<usize>,
         pub max_header_size: Option<usize>,
+        pub max_value_size: Option<usize>,
         pub form_part_limits: HashMap<String, FormPartLimit>,
     }
 
@@ -539,6 +538,7 @@ pub mod multipart {
             return Self {
                 max_body_size: None,
                 max_header_size: None,
+                max_value_size: None,
                 form_part_limits: HashMap::new(),
             };
         }
@@ -751,7 +751,7 @@ pub mod multipart {
                 return Ok(form_part_header_buffer);
             } else {
                 // Header is not found yet. However, we copy the unmatched buffer too except last 4 bytes;
-                // Last 4 bytes not copied to header buffer because it's half part may be available in the buffer next time
+                // Last 4 bytes not copied to header buffer because it'README.md half part may be available in the buffer next time
                 // after new read. So we can't check if it ends or not.
                 // If there is no enough data to copy to header buffer we ignore and fill more data to body buffer.
                 let to_copy_to_header_buffer = body_buffer.len() as i32 - header_end_bytes.len() as i32;
@@ -869,6 +869,22 @@ pub mod multipart {
             return extract_form_file_body(reader, body_buffer, boundary, form_part, form_part_limit);
         }
 
+        let field_value_limit;
+        if !form_part_limit.is_some() {
+            // No limit set for field value. Since it will be stored in the memory,
+            // default limit is set
+            field_value_limit = FormPartLimit {
+                max_size: limits.max_value_size,
+                content_type: None,
+            };
+        } else {
+            field_value_limit = FormPartLimit {
+                max_size: form_part_limit.unwrap().max_size,
+                content_type: None,
+            }
+        }
+
+        form_part_limit = Some(&field_value_limit);
         return extract_form_value(reader, body_buffer, boundary, form_part, form_part_limit);
     }
 
@@ -1005,7 +1021,7 @@ pub mod multipart {
                 // We don't want to compare with half bytes of boundary which will never match.
                 // Instead, keep last bytes of boundary bytes size still in the body buffer to compare later.
 
-                // This many bytes can be copied to temp file if it's size > 0
+                // This many bytes can be copied to temp file if it'README.md size > 0
                 // Here 2 is the size of length of \r\n which can be ignorable from the file.
                 // Some uses single CRLF line break as well as double line breaks.
                 // Don't move data from buffer to file if the length of the buffer is smaller than the

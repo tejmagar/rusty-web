@@ -259,10 +259,12 @@ impl Request {
         if content_type_value.starts_with("multipart/form-data;") {
             const MAX_BODY_SIZE: usize = 512 * 1024 * 1024; // 512 MiB
             const MAX_HEADER_SIZE: usize = 1024 * 1024; // 1 MiB
+            const MAX_VALUE_SIZE: usize = 2 * 1024; // 1 MiB
 
             let limits = multipart::Limits {
                 max_body_size: Some(MAX_BODY_SIZE),
                 max_header_size: Some(MAX_HEADER_SIZE),
+                max_value_size: Some(MAX_VALUE_SIZE),
                 form_part_limits: HashMap::new(),
             };
 
