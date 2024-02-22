@@ -870,16 +870,16 @@ pub mod multipart {
         }
 
         let field_value_limit;
-        if !form_part_limit.is_some() {
+        if form_part_limit.is_some() {
             // No limit set for field value. Since it will be stored in the memory,
             // default limit is set
             field_value_limit = FormPartLimit {
-                max_size: limits.max_value_size,
+                max_size: form_part_limit.unwrap().max_size,
                 content_type: None,
             };
         } else {
             field_value_limit = FormPartLimit {
-                max_size: form_part_limit.unwrap().max_size,
+                max_size: limits.max_value_size,
                 content_type: None,
             }
         }
@@ -1072,6 +1072,11 @@ pub mod multipart {
         let mut value_buffer: Vec<u8> = Vec::new();
         let mut bytes_written: usize = 0;
 
+        let mut max_value_size = None;
+        if form_part_limit.is_some() {
+            max_value_size = form_part_limit.unwrap().max_size;
+        }
+
         loop {
             let end_index = body_buffer.windows(value_end_matching_bytes.len())
                 .position(|window| window == value_end_matching_bytes);
@@ -1094,7 +1099,7 @@ pub mod multipart {
                 }
 
                 // Check if the value bytes written is larger than the limit specified
-                if form_part_limit.is_some() && (bytes_written > form_part_limit.unwrap().max_size.unwrap()) {
+                if max_value_size.is_some() && max_value_size.unwrap() > bytes_written {
                     return Err(MultipartFormDataError::MaxFieldSizeExceed(
                         form_part.name.clone().unwrap().to_string(),
                         "The form field value size exceeds the limit specified",
