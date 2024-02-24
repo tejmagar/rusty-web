@@ -1,5 +1,7 @@
 # Rusty Web
 
+<img src="docs/rusty-web.png" alt="Rusty Web" width="100">
+
 Rusty web is a simple to use, fully customizable lightweight web framework for rust developers.
 [Learn rusty web](https://tejmagar.github.io/rusty-web/)
 
