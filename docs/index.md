@@ -85,4 +85,4 @@ You can also use `request.form_data()` and `request.files()` together.
 In Rusty Web, you have full control over the socket stream. You can stream the response
 however you like.
 
-Go to [advanced usage tutorial](advanced/README.md)
+Go to [advanced usage tutorial](advanced/index)

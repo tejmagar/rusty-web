@@ -5,7 +5,18 @@ edit_uri: ./edit/main/docs
 google_analytics: [ 'G-8C90HL047B', 'Rusty Web' ]
 
 nav:
-  - Getting Started: README.md
-  - Advanced Usage: advanced/README.md
-  - Default Limits: default-limits/README.md
+  - Getting Started: index.md
+  - Advanced Usage: advanced/index.md
+  - Default Limits: default-limits/index.md
 
+theme:
+  name: material
+  favicon: img/favicon.ico
+  features:
+    - navigation.expand
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
