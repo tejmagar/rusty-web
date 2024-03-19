@@ -2,8 +2,10 @@ site_name: Rusty Web
 site_description: Rusty Web is a lightweight web framework for rust developers.
 repo_url: https://github.com/tejmagar/rusty-web
 edit_uri: ./edit/main/docs
-google_analytics: [ 'G-8C90HL047B', 'Rusty Web' ]
-
+extra:
+  analytics:
+    provider: google
+    property: G-8C90HL047B
 nav:
   - Getting Started: index.md
   - Advanced Usage: advanced/index.md
