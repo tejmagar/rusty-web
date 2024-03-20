@@ -1,6 +1,6 @@
 [package]
 name = "rusty-web"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 authors = ["Tej Magar"]
 description = "Rusty Web is a lightweight web framework for rust developers."
@@ -12,6 +12,7 @@ repository = "https://github.com/tejmagar/rusty-web/"
 
 [dependencies]
 regex = "1.10.3"
+
 tempfile = "3.10.0"
 urlencoding = "2.1.3"
 

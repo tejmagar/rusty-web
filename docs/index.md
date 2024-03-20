@@ -6,7 +6,7 @@ Rusty Web is a lightweight web framework for rust developers.
 
 ```
 [dependencies]
-rusty-web = "0.0.1"
+rusty-web = "0.0.2"
 ```
 
 ## Basic Usage
