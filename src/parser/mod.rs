@@ -751,7 +751,7 @@ pub mod multipart {
                 return Ok(form_part_header_buffer);
             } else {
                 // Header is not found yet. However, we copy the unmatched buffer too except last 4 bytes;
-                // Last 4 bytes not copied to header buffer because it'README.md half part may be available in the buffer next time
+                // Last 4 bytes not copied to header buffer because it's half part may be available in the buffer next time
                 // after new read. So we can't check if it ends or not.
                 // If there is no enough data to copy to header buffer we ignore and fill more data to body buffer.
                 let to_copy_to_header_buffer = body_buffer.len() as i32 - header_end_bytes.len() as i32;
