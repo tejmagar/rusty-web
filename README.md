@@ -9,7 +9,7 @@ Rusty web is a simple to use, fully customizable lightweight web framework for r
 
 ```
 [dependencies]
-rusty-web = "0.0.1"
+rusty-web = "0.0.2"
 ```
 
 ## Sample
