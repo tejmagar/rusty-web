@@ -103,7 +103,7 @@ pub mod body {
             return Err(BodyReadError::ContentLengthMissing);
         }
 
-        // Create new tmp directory
+        // Create new tmp file
         let temp_file_create = NamedTempFile::new();
         let mut temp_file;
 
